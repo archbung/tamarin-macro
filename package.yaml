@@ -1,0 +1,52 @@
+name:                macro-simple
+version:             0.1.0.0
+github:              "archbung/macro-simple"
+license:             BSD3
+author:              "Hizbullah Abdul Aziz Jabbar"
+maintainer:          "archbung@gmail.com"
+copyright:           "Copyright (c) 2020 Hizbullah Abdul Aziz Jabbar"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/archbung/macro-simple#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- mtl
+- containers
+- parsec
+
+library:
+  source-dirs: src
+
+executables:
+  macro-simple-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - macro-simple
+
+tests:
+  macro-simple-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - macro-simple
+    - hspec

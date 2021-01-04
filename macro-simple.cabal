@@ -57,6 +57,7 @@ test-suite macro-simple-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      MacroSpec
       ParserSpec
       Paths_macro_simple
   hs-source-dirs:

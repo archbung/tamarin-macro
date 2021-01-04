@@ -1,31 +1,46 @@
-module Parser where
+module Parser (doc, tok) where
 
 import           Data.Char              (isAlpha)
-import           Text.Parsec
-import           Text.Parsec.Char
-import           Text.Parsec.Combinator
+import           Text.Parsec            (Parsec, alphaNum, many, oneOf, try,
+                                         (<|>))
+import           Text.Parsec.Combinator (sepBy)
+import qualified Text.Parsec.Language   as L
+import qualified Text.Parsec.Token      as T
 
-import           Macro           (Doc (..), Token (..))
+import           Macro                  (Doc (..), Token (..))
 
 
 type Parser = Parsec String ()
 
+lang :: T.TokenParser ()
+lang = T.makeTokenParser $ L.emptyDef
+    { T.identStart = alphaNum <|> oneOf "_~:!$#*+<=>-@?|\\^[]%.\""
+    , T.identLetter = alphaNum <|> oneOf "_~:!$#*+<=>-@?|\\^[]%.\""
+    }
+
 identifier :: Parser String
-identifier = many1 $ satisfy (\c -> isAlpha c || elem c "!#~&$[]//-<>:")
+identifier = space *> T.identifier lang  -- skips leading whitespace
+
+parens :: Parser a -> Parser a
+parens = T.parens lang
+
+commaSep :: Parser a -> Parser [a]
+commaSep = T.commaSep lang
+
+space :: Parser ()
+space = T.whiteSpace lang
 
 leaf :: Parser Token
 leaf = Leaf <$> identifier
 
+args :: Parser [Token]
+args = parens (commaSep tok)  -- arg list can be empty
+
 node :: Parser Token
-node = do 
-    i <- identifier
-    spaces
-    -- FIXME: it should be allowed to have spaces between ','
-    args <- between (char '(') (char ')') (tok `sepBy` char ',')
-    return $ Node i args
+node = Node <$> identifier <*> args
 
 tok :: Parser Token
 tok = try node <|> leaf
 
 doc :: Parser Doc
-doc = tok `sepBy` space
+doc = many tok

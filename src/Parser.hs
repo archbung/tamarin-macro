@@ -1,35 +1,56 @@
 module Parser (doc, tok) where
 
-import           Data.Char              (isAlpha)
-import           Text.Parsec            (Parsec, alphaNum, many, oneOf, try,
-                                         (<|>))
+import           Control.Applicative    (liftA2)
+import           Data.Char              (isAlpha, isSpace)
+import           Text.Parsec            (Parsec, alphaNum, between, many, oneOf,
+                                         skipMany, try, (<|>))
+import           Text.Parsec.Char       hiding (spaces)
 import           Text.Parsec.Combinator (sepBy)
-import qualified Text.Parsec.Language   as L
-import qualified Text.Parsec.Token      as T
 
 import           Macro                  (Doc (..), Token (..))
 
 
 type Parser = Parsec String ()
 
-lang :: T.TokenParser ()
-lang = T.makeTokenParser $ L.emptyDef
-    { T.identStart = alphaNum <|> oneOf "_~:!$#*+<=>-@?|\\^[]%.\""
-    , T.identLetter = alphaNum <|> oneOf "_~:!$#*+<=>-@?|\\^[]%.\""
-    }
+-----------------------------------------------------------
+-- Basic parsers
+-----------------------------------------------------------
+spaces :: Parser ()
+spaces = skipMany simpleSpace
+    where
+        -- | All whitespace character except newline and CRLF
+        -- FIXME: Might not be enough
+        simpleSpace = satisfy isSpace'
+        isSpace' c
+          | c == '\r' || c == '\n' = False
+          | otherwise = isSpace c
 
-identifier :: Parser String
-identifier = space *> T.identifier lang  -- skips leading whitespace
+lexeme :: Parser a -> Parser a
+lexeme p = p <* spaces
+
+ident :: Parser String
+ident = lexeme ident'
+    where
+        ident' = liftA2 (:) identStart (many identLetter)
+        identStart = alphaNum <|> oneOf "_~:!$#*+<=>-@?|\\^[]%.\""
+        identLetter = identStart
+
+symbol :: String -> Parser String
+symbol str = lexeme (string str)
 
 parens :: Parser a -> Parser a
-parens = T.parens lang
+parens = between (symbol "(") (symbol ")")
+
+identifier :: Parser String
+identifier = spaces *> ident
 
 commaSep :: Parser a -> Parser [a]
-commaSep = T.commaSep lang
+commaSep p = sepBy p (symbol ",")
 
-space :: Parser ()
-space = T.whiteSpace lang
 
+-----------------------------------------------------------
+-- Token parsers
+-----------------------------------------------------------
 leaf :: Parser Token
 leaf = Leaf <$> identifier
 
@@ -39,8 +60,11 @@ args = parens (commaSep tok)  -- arg list can be empty
 node :: Parser Token
 node = Node <$> identifier <*> args
 
+nl :: Parser Token
+nl = Newline <$ (newline <|> crlf)
+
 tok :: Parser Token
-tok = try node <|> leaf
+tok = try node <|> try leaf <|> nl
 
 doc :: Parser Doc
 doc = many tok

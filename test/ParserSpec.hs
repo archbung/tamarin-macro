@@ -15,6 +15,15 @@ spec = do
       parse tok "" "baz(a,foo(c,d))" `shouldBe` 
         Right (Node "baz" [Leaf "a", Node "foo" [Leaf "c", Leaf "d"]]) 
 
+      parse tok "" "\n" `shouldBe`
+        Right Newline
+
+      parse tok "" "\n" `shouldBe`
+        Right Newline
+
+      parse tok "" "\r\n" `shouldBe`
+        Right Newline
+
     it "handles whitespace correctly" $ do
       parse tok "" "  foo " `shouldBe` 
         Right (Leaf "foo")
@@ -33,6 +42,9 @@ spec = do
     it "parses spthy elements" $ do
       parse doc "" "rule foo: [ Fr(~x) ] --> [ Out(~x) ]" `shouldBe`
         Right [Leaf "rule", Leaf "foo:", Leaf "[", Node "Fr" [Leaf "~x"], Leaf "]", Leaf "-->", Leaf "[", Node "Out" [Leaf "~x"], Leaf "]"]
+
+      parse doc "" (unlines ["rule foo:","[ Fr(~x) ] --> [ Out(~x) ]"]) `shouldBe`
+        Right [Leaf "rule", Leaf "foo:", Newline, Leaf "[", Node "Fr" [Leaf "~x"], Leaf "]", Leaf "-->", Leaf "[", Node "Out" [Leaf "~x"], Leaf "]", Newline]
 
       parse doc "" "rule foo: [ !A(~x) ] --> [ Out(~x) ]" `shouldBe`
         Right [Leaf "rule", Leaf "foo:", Leaf "[", Node "!A" [Leaf "~x"], Leaf "]", Leaf "-->", Leaf "[", Node "Out" [Leaf "~x"], Leaf "]"]

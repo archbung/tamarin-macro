@@ -27,6 +27,7 @@ library
   exposed-modules:
       Macro
       Parser
+      PrettyPrint
   other-modules:
       Paths_macro_simple
   hs-source-dirs:
@@ -59,6 +60,7 @@ test-suite macro-simple-test
   other-modules:
       MacroSpec
       ParserSpec
+      PrettyPrintSpec
       Paths_macro_simple
   hs-source-dirs:
       test

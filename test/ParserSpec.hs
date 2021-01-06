@@ -48,3 +48,6 @@ spec = do
 
       parse doc "" "rule foo: [ !A(~x) ] --> [ Out(~x) ]" `shouldBe`
         Right [Leaf "rule", Leaf "foo:", Leaf "[", Node "!A" [Leaf "~x"], Leaf "]", Leaf "-->", Leaf "[", Node "Out" [Leaf "~x"], Leaf "]"]
+
+      parse doc "" "lemma one_smaller_two:\n    \"All x y #i. B(x,y)@i ==> Smaller(x,y)\"" `shouldBe`
+        Right []

@@ -1,4 +1,4 @@
-module Parser (doc, tok) where
+module Parser (doc, tok, toks, tokToMacro, macro) where
 
 import           Control.Applicative    (liftA2)
 import           Data.Char              (isAlpha, isSpace)
@@ -7,7 +7,7 @@ import           Text.Parsec            (Parsec, alphaNum, between, many, oneOf,
 import           Text.Parsec.Char       hiding (spaces)
 import           Text.Parsec.Combinator (sepBy)
 
-import           Macro                  (Doc (..), Token (..))
+import           Macro                  (Doc (..), Token (..), Macro (..))
 
 
 type Parser = Parsec String ()
@@ -66,5 +66,20 @@ nl = Newline <$ (newline <|> crlf)
 tok :: Parser Token
 tok = try node <|> try leaf <|> nl
 
+toks :: Parser [Token]
+toks = many tok
+
+tokToMacro :: Token -> Macro
+tokToMacro tok@(Node s1 [Node s2 args,body])
+  | s1 == "define!" = Def s2 (map tokToMacro args) (tokToMacro body)
+  | otherwise = Tok tok
+tokToMacro tok@(Node name args)
+  | last name == '!' = App name (map tokToMacro args)
+  | otherwise = Tok tok
+tokToMacro tok = Tok tok
+
+macro :: Parser Macro
+macro = tokToMacro <$> tok
+
 doc :: Parser Doc
-doc = many tok
+doc = many macro
